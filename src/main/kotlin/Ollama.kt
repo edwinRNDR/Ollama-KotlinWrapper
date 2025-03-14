@@ -19,12 +19,12 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class Ollama(val host: String = "localhost", val port: Int = 11434, val model: String = "llama2") {
+class Ollama(val host: String = "localhost", val port: Int = 11434, val model: String = "gemma3") {
 
     /**
      * State of the Llama Server.
      */
-    private val _currentState = MutableStateFlow<LLMSTATE>(LLMSTATE.WAITING)
+    private val _currentState = MutableStateFlow(LLMSTATE.WAITING)
     val currentState: StateFlow<LLMSTATE> = _currentState
 
     /**
@@ -47,7 +47,6 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
     @param onFinish: A callback that will be called when the server closes the connection with the whole generated text
     @return A Flow of generated Tokens from the server
      */
-    @OptIn(InternalAPI::class, ExperimentalSerializationApi::class)
     suspend fun generate(prompt: String, onFinish: (String) -> Unit = {}): Flow<String> {
         if (_currentState.value == LLMSTATE.RUNNING) {
             throw Exception("Already running")
@@ -66,7 +65,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
         }
         return flow {
             var generatedText = ""
-            val channel: ByteReadChannel = response.content
+            val channel: ByteReadChannel = response.bodyAsChannel()
             try {
                 while (true) {
                     if (channel.availableForRead > 0) {
@@ -77,7 +76,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
                         }
                     }
                     if (channel.isClosedForRead) break
-                    delay(50) // A small delay to prevent tight looping
+                    delay(1) // A small delay to prevent tight looping
                 }
                 onFinish(generatedText)
             } catch (_: Exception) {
@@ -91,7 +90,6 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
      * @param onFinish: Callback when Generation is finished. Will be called with the new messages history where the last entry is the most recent response form the server
      * @return A Flow of generated Tokens from the server
      */
-    @OptIn(InternalAPI::class)
     suspend fun chat(messages: List<Message>, onFinish: (List<Message>) -> Unit = {}): Flow<String> {
         if (_currentState.value == LLMSTATE.RUNNING) {
             throw Exception("Already running")
@@ -110,7 +108,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
 
         return flow {
             var generatedText = ""
-            val channel: ByteReadChannel = response.content
+            val channel: ByteReadChannel = response.bodyAsChannel()
             try {
                 while (true) {
                     if (channel.availableForRead > 0) {
@@ -121,7 +119,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
                         }
                     }
                     if (channel.isClosedForRead) break
-                    delay(50) // A small delay to prevent tight looping
+                    delay(1) // A small delay to prevent tight looping
                 }
                 val newMessages = messages.toMutableList()
                 newMessages.add(Message(Role.SYSTEM, generatedText))
@@ -136,7 +134,6 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
      * @param prompt: The prompt to generate the embedding for
      * @return The embedding of the prompt
      */
-    @OptIn(InternalAPI::class)
     suspend fun embedding(prompt: String): Embedding?{
         if (_currentState.value == LLMSTATE.RUNNING) {
             throw Exception("Already running")
@@ -153,7 +150,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
             )
         }
 
-        val channel: ByteReadChannel = response.content
+        val channel: ByteReadChannel = response.bodyAsChannel()
         var ret = Embedding(listOf())
         try {
             while (true) {
@@ -164,7 +161,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
                     }
                 }
                 if (channel.isClosedForRead) break
-                delay(50) // A small delay to prevent tight looping
+                delay(1) // A small delay to prevent tight looping
             }
         } catch (_: Exception) {
             // Handle specific exceptions here
@@ -175,7 +172,6 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
     /**
      * @return The list of available models
      */
-    @OptIn(InternalAPI::class)
     suspend fun listModels(): Models{
         if (_currentState.value == LLMSTATE.RUNNING) {
             throw Exception("Already running")
@@ -184,7 +180,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
             contentType(ContentType.Application.Json)
         }
 
-        val channel: ByteReadChannel = response.content
+        val channel: ByteReadChannel = response.bodyAsChannel()
         var ret = Models(listOf())
         try {
             while (true) {
@@ -195,7 +191,7 @@ class Ollama(val host: String = "localhost", val port: Int = 11434, val model: S
                     }
                 }
                 if (channel.isClosedForRead) break
-                delay(50) // A small delay to prevent tight looping
+                delay(1) // A small delay to prevent tight looping
             }
         } catch (_: Exception) {
             // Handle specific exceptions here

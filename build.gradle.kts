@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.21"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.10"
+    kotlin("jvm") version "2.1.10"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.0"
     `maven-publish`
 }
 
@@ -11,13 +11,13 @@ repositories {
     mavenCentral()
 }
 
-val ktor_version: String = "2.3.7"
+val ktor_version: String = "3.1.1"
 
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
     implementation("ch.qos.logback:logback-classic:1.4.14")
 }
 
