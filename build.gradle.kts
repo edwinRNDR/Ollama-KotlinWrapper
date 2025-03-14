@@ -4,7 +4,7 @@ plugins {
     `maven-publish`
 }
 
-group = "de.jackBeBack"
+group = "de.jackbeback"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -26,4 +26,12 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(17)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
 }
